@@ -7,8 +7,25 @@ const path = require('path');
 // قراءة التوكن من متغير البيئة أو استخدام القيمة الافتراضية
 const BOT_TOKEN = process.env.BOT_TOKEN || '8583406610:AAHyQilOKjNFTs3_9sEy1Wg522SSx8P9SUY';
 
-// إنشاء البوت
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+// إنشاء البوت مع إعدادات محسّنة لمنع التكرار
+const bot = new TelegramBot(BOT_TOKEN, {
+    polling: {
+        interval: 300,
+        autoStart: true,
+        params: {
+            timeout: 10
+        }
+    }
+});
+
+// تخزين الرسائل المعالجة لمنع التكرار
+const processedMessages = new Set();
+const MESSAGE_CACHE_TIME = 60000; // دقيقة واحدة
+
+// تنظيف الـ cache كل دقيقة
+setInterval(() => {
+    processedMessages.clear();
+}, MESSAGE_CACHE_TIME);
 
 // إنشاء Express server للـ health checks (مطلوب للاستضافة المجانية)
 const express = require('express');
@@ -32,6 +49,13 @@ console.log('🤖 البوت شغال الحين...');
 // رسالة الترحيب
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
+    const messageId = msg.message_id;
+
+    // تحقق من عدم معالجة الرسالة مسبقاً
+    const messageKey = `${chatId}_${messageId}`;
+    if (processedMessages.has(messageKey)) return;
+    processedMessages.add(messageKey);
+
     const welcomeMessage = `
 🎬 مرحباً بك في بوت تحميل فيديوهات تيك توك!
 
@@ -49,11 +73,20 @@ bot.onText(/\/start/, (msg) => {
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
+    const messageId = msg.message_id;
 
     // تجاهل أوامر البوت
     if (text && text.startsWith('/')) {
         return;
     }
+
+    // تحقق من عدم معالجة الرسالة مسبقاً
+    const messageKey = `${chatId}_${messageId}`;
+    if (processedMessages.has(messageKey)) {
+        console.log(`⏭️ تخطي رسالة مكررة: ${messageKey}`);
+        return;
+    }
+    processedMessages.add(messageKey);
 
     // التحقق من وجود رابط تيك توك
     if (text && (text.includes('tiktok.com') || text.includes('vm.tiktok.com') || text.includes('vt.tiktok.com'))) {
@@ -369,5 +402,24 @@ bot.on('message', async (msg) => {
 
 // التعامل مع الأخطاء
 bot.on('polling_error', (error) => {
-    console.error('خطأ في الاتصال:', error);
+    console.error('❌ خطأ في الاتصال:', error.message);
+
+    // إذا كان الخطأ بسبب instance ثاني، أوقف هذا البوت
+    if (error.message.includes('409') || error.message.includes('Conflict')) {
+        console.error('⚠️ فيه instance ثاني شغال! إيقاف هذا البوت...');
+        process.exit(1);
+    }
+});
+
+// معالجة إيقاف البوت بشكل صحيح
+process.on('SIGINT', () => {
+    console.log('\n👋 إيقاف البوت...');
+    bot.stopPolling();
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\n👋 إيقاف البوت...');
+    bot.stopPolling();
+    process.exit(0);
 });
