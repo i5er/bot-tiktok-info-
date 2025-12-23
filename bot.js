@@ -10,6 +10,23 @@ const BOT_TOKEN = process.env.BOT_TOKEN || '8583406610:AAHyQilOKjNFTs3_9sEy1Wg52
 // إنشاء البوت
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
+// إنشاء Express server للـ health checks (مطلوب للاستضافة المجانية)
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.send('🤖 TikTok Bot is running!');
+});
+
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+app.listen(PORT, () => {
+    console.log(`🌐 Health check server running on port ${PORT}`);
+});
+
 console.log('🤖 البوت شغال الحين...');
 
 // رسالة الترحيب
