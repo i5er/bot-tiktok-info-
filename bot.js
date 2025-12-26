@@ -33,7 +33,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-    res.send('🤖 TikTok Bot is running!');
+    res.json({
+        status: 'active',
+        bot: 'TikTok Bot',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
 });
 
 app.get('/health', (req, res) => {
@@ -43,6 +48,24 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
     console.log(`🌐 Health check server running on port ${PORT}`);
 });
+
+// ========================================
+// 🚀 Keep-Alive System for Render
+// Self-ping every 60 seconds to prevent sleep
+// ========================================
+const RENDER_URL = process.env.RENDER_URL; // أضف هذا في متغيرات Render
+if (RENDER_URL) {
+    console.log('⏰ Keep-Alive system activated!');
+    setInterval(async () => {
+        try {
+            await axios.get(RENDER_URL + '/health');
+            console.log('⏰ Keep-alive ping sent at', new Date().toLocaleTimeString('ar-SA'));
+        } catch (error) {
+            console.log('⚠️ Keep-alive ping failed:', error.message);
+        }
+    }, 60000); // كل 60 ثانية
+}
+// ========================================
 
 console.log('🤖 البوت شغال الحين...');
 
