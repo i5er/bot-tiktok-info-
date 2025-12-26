@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="تحميل فيديوهات تيك توك بدون علامة مائية - أسرع وأسهل طريقة لتحميل فيديوهات TikTok">
+    <meta name="keywords" content="تيك توك, تحميل, فيديو, TikTok, download">
+    <title>تحميل فيديوهات تيك توك | TikTok Downloader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Background Animation -->
+    <div class="background-animation">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">🎬</span>
+                <h1>TikTok Downloader</h1>
+            </div>
+            <p class="tagline">حمّل فيديوهاتك المفضلة بدون علامة مائية ✨</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="download">
+                    <span class="tab-icon">📥</span>
+                    تحميل فيديو
+                </button>
+                <button class="tab-btn" data-tab="profile">
+                    <span class="tab-icon">👤</span>
+                    معلومات الحساب
+                </button>
+                <button class="tab-btn" data-tab="editor">
+                    <span class="tab-icon">✏️</span>
+                    تعديل البروفايل
+                </button>
+            </div>
+
+            <!-- Download Tab -->
+            <div class="tab-content active" id="download-tab">
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <h2>📹 تحميل فيديو تيك توك</h2>
+                        <p>الصق رابط الفيديو وانقر على تحميل</p>
+                    </div>
+                    <form id="download-form" class="input-form">
+                        <div class="input-group">
+                            <input type="text" id="video-url" class="input-field"
+                                placeholder="https://www.tiktok.com/@username/video/..." required>
+                            <button type="submit" class="btn btn-primary">
+                                <span class="btn-text">تحميل</span>
+                                <span class="btn-icon">⬇️</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Loading State -->
+                    <div id="download-loading" class="loading-state hidden">
+                        <div class="spinner"></div>
+                        <p>جاري تحميل الفيديو...</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="download-error" class="error-message hidden"></div>
+
+                    <!-- Success State -->
+                    <div id="download-result" class="result-container hidden">
+                        <div class="result-header">
+                            <h3>✅ تم التحميل بنجاح!</h3>
+                        </div>
+                        <div class="video-info">
+                            <p class="author"><strong>👤 الناشر:</strong> <span id="video-author"></span></p>
+                            <p class="description"><strong>📝 الوصف:</strong> <span id="video-description"></span></p>
+                        </div>
+                        <div class="stats-grid" id="video-stats"></div>
+                    </div>
+                </div>
+
+                <!-- How to Use -->
+                <div class="card info-card">
+                    <h3>📝 كيفية الاستخدام</h3>
+                    <ol class="steps-list">
+                        <li>افتح تطبيق تيك توك واختر الفيديو المطلوب</li>
+                        <li>اضغط على زر "مشاركة" ثم "نسخ الرابط"</li>
+                        <li>الصق الرابط في الحقل أعلاه</li>
+                        <li>اضغط على "تحميل" وانتظر قليلاً</li>
+                        <li>احفظ الفيديو على جهازك!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div class="tab-content" id="profile-tab">
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <h2>👤 معلومات حساب تيك توك</h2>
+                        <p>أدخل اسم المستخدم للحصول على المعلومات</p>
+                    </div>
+                    <form id="profile-form" class="input-form">
+                        <div class="input-group">
+                            <input type="text" id="username" class="input-field"
+                                placeholder="اسم المستخدم (مع أو بدون @)" required>
+                            <button type="submit" class="btn btn-primary">
+                                <span class="btn-text">بحث</span>
+                                <span class="btn-icon">🔍</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Loading State -->
+                    <div id="profile-loading" class="loading-state hidden">
+                        <div class="spinner"></div>
+                        <p>جاري البحث عن الحساب...</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="profile-error" class="error-message hidden"></div>
+
+                    <!-- Success State -->
+                    <div id="profile-result" class="result-container hidden">
+                        <div class="profile-card">
+                            <img id="profile-avatar" class="profile-avatar" alt="Profile Picture">
+                            <div class="profile-info">
+                                <h3 id="profile-nickname"></h3>
+                                <p class="username">@<span id="profile-username"></span></p>
+                                <p class="bio" id="profile-bio"></p>
+                            </div>
+                        </div>
+                        <div class="stats-grid" id="profile-stats"></div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Editor Tab -->
+            <div class="tab-content" id="editor-tab">
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <h2>✏️ تعديل البروفايل</h2>
+                        <p>أدخل اسم المستخدم وملفات تعريف الارتباط (Cookies) لتعديل حسابك الحقيقي</p>
+                    </div>
+
+                    <!-- Session Login Form -->
+                    <div id="session-login-section">
+                        <form id="session-form" class="input-form">
+                            <div class="input-group">
+                                <input type="text" id="session-id" class="input-field"
+                                    placeholder="أدخل اسم المستخدم من تيك توك (مع أو بدون @)" required>
+                            </div>
+                            <div class="input-group" style="margin-top: 1rem;">
+                                <textarea id="session-cookies" class="input-field textarea-field"
+                                    placeholder="الصق ملفات تعريف الارتباط (Cookies) من متصفحك هنا" rows="3"
+                                    required></textarea>
+                            </div>
+                            <div class="info-card"
+                                style="margin-top: 1rem; padding: 1rem; background: rgba(79, 172, 254, 0.1); border-radius: 12px;">
+                                <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">
+                                    📝 <strong>كيفية الحصول على Cookies:</strong><br>
+                                    1. سجل دخول في tiktok.com<br>
+                                    2. افتح أدوات المطور (F12)<br>
+                                    3. اذهب إلى Application → Cookies → tiktok.com<br>
+                                    4. انسخ قيمة "sessionid" و "sid_tt"<br>
+                                    5. الصقها بهذا الشكل: sessionid=xxx; sid_tt=yyy
+                                </p>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">
+                                <span class="btn-text">تسجيل الدخول</span>
+                                <span class="btn-icon">🔑</span>
+                            </button>
+                        </form>
+
+                        <!-- Loading State -->
+                        <div id="session-loading" class="loading-state hidden">
+                            <div class="spinner"></div>
+                            <p>جاري التحقق من الجلسة...</p>
+                        </div>
+
+                        <!-- Error State -->
+                        <div id="session-error" class="error-message hidden"></div>
+                    </div>
+
+                    <!-- Editor Section (Hidden until logged in) -->
+                    <div id="editor-section" class="hidden">
+                        <!-- Current Profile Display -->
+                        <div class="result-container">
+                            <div class="profile-card">
+                                <img id="editor-avatar" class="profile-avatar" alt="Profile Picture">
+                                <div class="profile-info">
+                                    <h3 id="editor-nickname"></h3>
+                                    <p class="username">@<span id="editor-username"></span></p>
+                                    <p class="bio" id="editor-bio"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Forms -->
+                        <div class="edit-forms">
+                            <!-- Edit Nickname -->
+                            <div class="edit-card">
+                                <h3>📝 تغيير الاسم</h3>
+                                <form id="nickname-form" class="input-form">
+                                    <div class="input-group">
+                                        <input type="text" id="new-nickname" class="input-field"
+                                            placeholder="الاسم الجديد" required>
+                                        <button type="submit" class="btn btn-primary">
+                                            <span class="btn-text">حفظ</span>
+                                            <span class="btn-icon">💾</span>
+                                        </button>
+                                    </div>
+                                </form>
+                                <div id="nickname-status" class="status-message hidden"></div>
+                            </div>
+
+                            <!-- Edit Avatar -->
+                            <div class="edit-card">
+                                <h3>🖼️ تغيير الصورة</h3>
+                                <form id="avatar-form" class="input-form">
+                                    <div class="input-group">
+                                        <input type="url" id="new-avatar" class="input-field"
+                                            placeholder="رابط الصورة الجديدة" required>
+                                        <button type="submit" class="btn btn-primary">
+                                            <span class="btn-text">حفظ</span>
+                                            <span class="btn-icon">💾</span>
+                                        </button>
+                                    </div>
+                                </form>
+                                <div id="avatar-status" class="status-message hidden"></div>
+                            </div>
+
+                            <!-- Edit Bio -->
+                            <div class="edit-card">
+                                <h3>📄 تغيير البايو</h3>
+                                <form id="bio-form" class="input-form">
+                                    <div class="input-group-vertical">
+                                        <textarea id="new-bio" class="input-field textarea-field"
+                                            placeholder="البايو الجديد" rows="3" required></textarea>
+                                        <button type="submit" class="btn btn-primary">
+                                            <span class="btn-text">حفظ</span>
+                                            <span class="btn-icon">💾</span>
+                                        </button>
+                                    </div>
+                                </form>
+                                <div id="bio-status" class="status-message hidden"></div>
+                            </div>
+                        </div>
+
+                        <!-- Logout Button -->
+                        <button id="logout-btn" class="btn btn-secondary">
+                            <span class="btn-text">تسجيل الخروج</span>
+                            <span class="btn-icon">🚪</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>صُنع بـ ❤️ لمحبي تيك توك</p>
+            <p class="disclaimer">هذا الموقع غير تابع لشركة TikTok</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

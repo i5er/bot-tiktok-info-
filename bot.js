@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 // قراءة التوكن من متغير البيئة أو استخدام القيمة الافتراضية
-const BOT_TOKEN = process.env.BOT_TOKEN || '8583406610:AAHyQilOKjNFTs3_9sEy1Wg522SSx8P9SUY';
+const BOT_TOKEN = process.env.BOT_TOKEN || '6397660976:AAEJAFoxwOzSTdCJPeRIoya53nxfHPoh5VM';
 
 // إنشاء البوت مع إعدادات محسّنة لمنع التكرار
 const bot = new TelegramBot(BOT_TOKEN, {

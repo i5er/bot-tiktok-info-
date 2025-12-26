@@ -1,115 +1,141 @@
-# 🤖 TikTok Info Bot
+# 🚀 TikTok Bot - Telegram
 
-بوت تيليجرام لتحميل فيديوهات تيك توك بدون علامة مائية وعرض معلومات الحسابات.
+بوت تيليجرام لتحميل فيديوهات TikTok بدون علامة مائية والبحث عن معلومات المستخدمين.
 
 ## ✨ المميزات
 
-- 📹 **تحميل الفيديوهات** - تحميل فيديوهات تيك توك بدون علامة مائية
-- 👤 **معلومات الحسابات** - عرض معلومات تفصيلية عن أي حساب تيك توك
-- 🌍 **كشف الدولة** - استخراج دولة المستخدم من البايو أو الاسم
-- 📊 **الإحصائيات** - عرض المتابعين، الإعجابات، عدد الفيديوهات، وغيرها
-- 🔍 **بحث مرن** - قبول اليوزر نيم مع أو بدون @
+- 📥 تحميل فيديوهات TikTok بدون علامة مائية
+- 👤 البحث عن معلومات مستخدمي TikTok
+- 📊 عرض إحصائيات الفيديوهات والحسابات
+- 🌍 دعم كامل للغة العربية
+- 🖼️ دعم تحميل الصور المتعددة (Slideshows)
 
-## 🚀 التثبيت
+## 🛠️ التثبيت المحلي
 
-### المتطلبات
-- Node.js (v14 أو أحدث)
+### المتطلبات:
+- Node.js 16 أو أحدث
 - npm أو yarn
 
-### الخطوات
+### الخطوات:
 
-1. **استنساخ المشروع**
+1. **استنساخ المشروع:**
 ```bash
-git clone https://github.com/3zoz121/bot-tiktok-info-.git
-cd bot-tiktok-info-
+git clone <repository-url>
+cd bot_tik
 ```
 
-2. **تثبيت المكتبات**
+2. **تثبيت الحزم:**
 ```bash
 npm install
 ```
 
-3. **إعداد البوت**
-- انسخ ملف `.env.example` إلى `.env`
+3. **إعداد ملف البيئة:**
 ```bash
 cp .env.example .env
 ```
-- افتح ملف `.env` وضع توكن البوت الخاص بك من [@BotFather](https://t.me/BotFather)
 
-4. **تشغيل البوت**
-```bash
-node bot.js
+4. **إضافة توكن البوت:**
+افتح ملف `.env` وأضف توكن البوت من [@BotFather](https://t.me/BotFather):
+```
+BOT_TOKEN=your_bot_token_here
 ```
 
-## 🌐 استضافة مجانية 24/7
-
-يمكنك استضافة البوت مجاناً على أحد هذه المنصات:
-
-### 1. **Render.com** (موصى به ⭐)
-- سجل حساب على [Render.com](https://render.com)
-- اضغط "New" → "Web Service"
-- اربط حساب GitHub واختر هذا المشروع
-- اختر الإعدادات:
-  - **Environment**: Node
-  - **Build Command**: `npm install`
-  - **Start Command**: `node bot.js`
-- أضف متغير البيئة `BOT_TOKEN` في قسم Environment
-- اضغط "Create Web Service"
-
-### 2. **Railway.app**
-- سجل حساب على [Railway.app](https://railway.app)
-- اضغط "New Project" → "Deploy from GitHub repo"
-- اختر المشروع
-- أضف متغير البيئة `BOT_TOKEN`
-- سيبدأ التشغيل تلقائياً
-
-### 3. **Fly.io**
+5. **تشغيل البوت:**
 ```bash
-# ثبت Fly CLI
-curl -L https://fly.io/install.sh | sh
-
-# سجل دخول
-flyctl auth login
-
-# انشر البوت
-flyctl launch
-flyctl secrets set BOT_TOKEN=your_token_here
-flyctl deploy
+npm start
+# أو
+npm run bot
 ```
 
-## 📝 الاستخدام
+6. **تشغيل الموقع (اختياري):**
+```bash
+npm run dev
+# أو
+npm run website
+```
 
-### تحميل فيديو
-أرسل رابط فيديو تيك توك للبوت:
+## 🌐 النشر على Railway (استضافة مجانية)
+
+للحصول على دليل شامل لرفع البوت على Railway، راجع:
+📖 **[دليل النشر على Railway](./RAILWAY_GUIDE.md)**
+
+### خطوات سريعة:
+
+1. إنشاء حساب على [Railway](https://railway.app)
+2. رفع المشروع على GitHub
+3. ربط GitHub بـ Railway
+4. إضافة `BOT_TOKEN` في Variables
+5. النشر التلقائي! 🎉
+
+## 📁 هيكل المشروع
+
+```
+bot_tik/
+├── bot.js              # البوت الرئيسي (Telegram)
+├── package.json        # معلومات المشروع والحزم
+├── railway.json        # إعدادات Railway
+├── Procfile           # إعدادات تشغيل Railway
+├── .env.example       # مثال لملف البيئة
+├── .gitignore         # ملفات مستثناة من Git
+└── website/           # موقع تحميل الفيديوهات
+    ├── server.js      # خادم الموقع
+    ├── public/        # الملفات العامة
+    └── ...
+```
+
+## 🤖 استخدام البوت
+
+### الأوامر المتاحة:
+
+- `/start` - بدء البوت
+- أرسل **رابط فيديو TikTok** - لتحميل الفيديو
+- أرسل **@username** - للبحث عن مستخدم TikTok
+
+### أمثلة:
+
 ```
 https://www.tiktok.com/@username/video/1234567890
-```
-
-### معلومات حساب
-أرسل يوزر نيم (مع أو بدون @):
-```
-username
 @username
 ```
 
-## 🛠️ التقنيات المستخدمة
+## 🔧 التقنيات المستخدمة
 
-- [node-telegram-bot-api](https://github.com/yagop/node-telegram-bot-api) - Telegram Bot API
-- [@tobyg74/tiktok-api-dl](https://github.com/TobyG74/tiktok-api-dl) - TikTok API
-- [axios](https://axios-http.com/) - HTTP client
+- **Node.js** - بيئة التشغيل
+- **node-telegram-bot-api** - للتعامل مع Telegram API
+- **@tobyg74/tiktok-api-dl** - لتحميل فيديوهات TikTok
+- **Express** - خادم الويب (للموقع)
+- **Axios** - طلبات HTTP
 
-## 📄 الترخيص
+## 📝 ملاحظات مهمة
 
-MIT License - استخدم المشروع بحرية!
+- ✅ البوت يعمل 24/7 على Railway
+- ✅ مجاني تماماً (500 ساعة/شهر)
+- ⚠️ لا ترفع ملف `.env` على GitHub
+- ⚠️ احفظ توكن البوت في مكان آمن
 
-## 🤝 المساهمة
+## 🐛 حل المشاكل
 
-المساهمات مرحب بها! افتح Pull Request أو Issue.
+### البوت لا يستجيب:
+1. تحقق من صحة التوكن
+2. تأكد من تشغيل البوت
+3. راجع اللوقات للأخطاء
+
+### فشل تحميل الفيديو:
+1. تحقق من صحة الرابط
+2. تأكد من أن الفيديو عام (ليس خاص)
+3. جرب رابط آخر
 
 ## 📞 الدعم
 
-إذا واجهت أي مشكلة، افتح [Issue](https://github.com/3zoz121/bot-tiktok-info-/issues) على GitHub.
+إذا واجهت أي مشكلة، يمكنك:
+- فتح Issue على GitHub
+- مراجعة الوثائق
+- التواصل معي
+
+## 📄 الترخيص
+
+ISC License
 
 ---
 
-صنع بـ ❤️ في السعودية
+صنع بـ ❤️ للمجتمع العربي

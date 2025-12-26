@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "main": "bot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node website/server.js",
+    "start": "node bot.js",
+    "website": "cd website && npm run dev",
+    "bot": "node bot.js"
   },
   "keywords": [],
   "author": "",
