@@ -415,14 +415,9 @@ bot.on('message', async (msg) => {
             await bot.sendMessage(chatId, '❌ حدث خطأ أثناء البحث. جرب مرة ثانية.');
         }
     }
-<<<<<<< HEAD
-    else if (text) {
-        // رسالة للمستخدم إذا أرسل شيء غير رابط تيك توك أو يوزر نيم
-=======
     else if (text && msg.chat.type === 'private') {
         // رسالة للمستخدم إذا أرسل شيء غير رابط تيك توك أو يوزر نيم
         // يتم إرسالها فقط في المحادثات الخاصة لتجنب الإزعاج في المجموعات
->>>>>>> 6e2a5fd (Restrict help message auto-reply to private chats only)
         await bot.sendMessage(chatId, `⚠️ أرسل لي:
 📹 رابط فيديو من تيك توك عشان أحمله لك
 👤 أو يوزر نيم (مع أو بدون @) عشان أجيب لك معلومات الحساب!`);
