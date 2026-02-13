@@ -256,11 +256,11 @@ bot.on('message', async (msg) => {
             await bot.sendMessage(chatId, '❌ حدث خطأ أثناء تحميل الفيديو. جرب مرة ثانية أو جرب رابط ثاني.');
         }
     }
-    // التحقق من وجود يوزر نيم (مع أو بدون @)
-    else if (text && !text.includes('http') && text.length > 2 && text.length < 30) {
+    // التحقق من وجود يوزر نيم (يجب أن يبدأ بـ @)
+    else if (text && text.startsWith('@') && !text.includes('http') && text.length > 2 && text.length < 30) {
         try {
-            // إزالة @ إذا كانت موجودة
-            const username = text.startsWith('@') ? text.substring(1) : text;
+            // إزالة @
+            const username = text.substring(1);
             const waitMsg = await bot.sendMessage(chatId, '⏳ جاري البحث عن الحساب... انتظر شوي');
 
             console.log('🔍 البحث عن اليوزر:', username);
@@ -420,7 +420,7 @@ bot.on('message', async (msg) => {
         // يتم إرسالها فقط في المحادثات الخاصة لتجنب الإزعاج في المجموعات
         await bot.sendMessage(chatId, `⚠️ أرسل لي:
 📹 رابط فيديو من تيك توك عشان أحمله لك
-👤 أو يوزر نيم (مع أو بدون @) عشان أجيب لك معلومات الحساب!`);
+👤 أو يوزر نيم (مثل @user) عشان أجيب لك معلومات الحساب!`);
     }
 });
 
