@@ -101,7 +101,7 @@ if (RENDER_URL) {
 console.log('🤖 البوت شغال الحين...');
 
 // رسالة الترحيب
-bot.onText(/\/start/, (msg) => {
+bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     const messageId = msg.message_id;
     const userId = msg.from.id.toString();
