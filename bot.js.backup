@@ -6,7 +6,6 @@ const path = require('path');
 
 // قراءة التوكن من متغير البيئة أو استخدام القيمة الافتراضية
 const BOT_TOKEN = process.env.BOT_TOKEN || '8583406610:AAHyQilOKjNFTs3_9sEy1Wg522SSx8P9SUY';
-const CHANNEL_USERNAME = process.env.CHANNEL_USERNAME || ''; // ضع معرف قناتك هنا مثل @i5err
 
 // إنشاء البوت مع إعدادات محسّنة لمنع التكرار
 const bot = new TelegramBot(BOT_TOKEN, {
@@ -27,36 +26,6 @@ const MESSAGE_CACHE_TIME = 60000; // دقيقة واحدة
 setInterval(() => {
     processedMessages.clear();
 }, MESSAGE_CACHE_TIME);
-
-// نظام حفظ المستخدمين للـ broadcast
-const USERS_FILE = path.join(__dirname, 'users.json');
-
-// تحميل المستخدمين
-function loadUsers() {
-    try {
-        if (fs.existsSync(USERS_FILE)) {
-            const data = fs.readFileSync(USERS_FILE, 'utf8');
-            return new Set(JSON.parse(data));
-        }
-    } catch (error) {
-        console.error('Error loading users:', error);
-    }
-    return new Set();
-}
-
-// حفظ المستخدمين
-function saveUsers(users) {
-    try {
-        fs.writeFileSync(USERS_FILE, JSON.stringify([...users]), 'utf8');
-    } catch (error) {
-        console.error('Error saving users:', error);
-    }
-}
-
-const botUsers = loadUsers();
-
-// معرف الأدمن (ضع معرفك هنا)
-const ADMIN_ID = process.env.ADMIN_ID || 'YOUR_TELEGRAM_ID'; // غيره لمعرفك
 
 // إنشاء Express server للـ health checks (مطلوب للاستضافة المجانية)
 const express = require('express');
@@ -104,31 +73,6 @@ console.log('🤖 البوت شغال الحين...');
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const messageId = msg.message_id;
-    const userId = msg.from.id.toString();
-
-    // حفظ المستخدم
-    if (!botUsers.has(userId)) {
-        botUsers.add(userId);
-        saveUsers(botUsers);
-        console.log(`✅ New user: ${userId} (Total: ${botUsers.size})`);
-    }
-
-    if (CHANNEL_USERNAME) {
-        try {
-            const chatMember = await bot.getChatMember(CHANNEL_USERNAME, userId);
-            if (!['member', 'administrator', 'creator'].includes(chatMember.status)) {
-                const channelUrl = CHANNEL_USERNAME.startsWith('@') ? `https://t.me/${CHANNEL_USERNAME.substring(1)}` : CHANNEL_USERNAME;
-                await bot.sendMessage(chatId, `⚠️ عذراً، يجب عليك الاشتراك في قناة البوت أولاً لتتمكن من استخدامه.\n\nاشترك من هنا 👇 ثم أرسل /start`, {
-                    reply_markup: {
-                        inline_keyboard: [[{ text: 'اشترك في القناة 📢', url: channelUrl }]]
-                    }
-                });
-                return;
-            }
-        } catch (error) {
-            console.error('Error checking subscription on /start:', error.message);
-        }
-    }
 
     // تحقق من عدم معالجة الرسالة مسبقاً
     const messageKey = `${chatId}_${messageId}`;
@@ -136,69 +80,233 @@ bot.onText(/\/start/, (msg) => {
     processedMessages.add(messageKey);
 
     const welcomeMessage = `
-🎬 مرحباً بك في بوت تحميل فيديوهات تيك توك!
+🎬 مرحباً بك في بوت تحميل من جميع منصات التواصل!
 
-📝 الميزات المتاحة:
+📱 المنصات المدعومة:
+✅ TikTok - فيديوهات بدون علامة مائية
+✅ Instagram - Posts, Reels, Stories
+✅ Twitter/X - فيديوهات وصور
+✅ YouTube - فيديوهات و Shorts
+✅ Facebook - فيديوهات
+✅ Snapchat - Stories
 
-📥 تحميل الفيديوهات:
-• انسخ رابط أي فيديو من تيك توك
-• أرسله هنا وبينزل لك بدون علامة مائية! ✨
+📝 كيف تستخدم البوت:
+فقط أرسل الرابط من أي منصة وخلني أحمله لك! 🚀
 
-👤 معلومات الحسابات:
-• أرسل اليوزر نيم (مع أو بدون @)
-• بيجيب لك كل معلومات الحساب
+👤 معلومات حسابات TikTok:
+أرسل اليوزر نيم (مع أو بدون @) لعرض معلومات الحساب
 
-جرب الحين! 🚀
+جرب الحين! ✨
   `;
     bot.sendMessage(chatId, welcomeMessage);
 });
 
-// أمر البث للأدمن
-bot.onText(/\/broadcast (.+)/, async (msg, match) => {
+// ========================================
+// 🔐 Login Command - تسجيل الدخول
+// ========================================
+bot.onText(/\/login/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id.toString();
 
-    if (userId !== ADMIN_ID) {
-        await bot.sendMessage(chatId, '❌ هذا الأمر للأدمن فقط!');
+    // Check if already logged in
+    if (sessionManager.hasSession(userId) && sessionManager.validateSession(userId)) {
+        await bot.sendMessage(chatId, '✅ أنت مسجل دخول بالفعل!\n\nاستخدم /check_reposts لفحص إعادات النشر');
         return;
     }
 
-    const message = match[1];
-    const statusMsg = await bot.sendMessage(chatId, `📢 جاري الإرسال لـ ${botUsers.size} مستخدم...`);
+    // Set user state to waiting for cookies
+    userStates.set(userId, 'WAITING_FOR_COOKIES');
 
-    let sent = 0, failed = 0;
+    const loginMessage = `
+🔐 تسجيل الدخول لحساب TikTok
 
-    for (const user of botUsers) {
-        try {
-            await bot.sendMessage(user, `📢 إعلان:\n\n${message}`);
-            sent++;
-            await new Promise(r => setTimeout(r, 50));
-        } catch (error) {
-            failed++;
-        }
-    }
+📝 الطريقة الأولى (الأسهل):
 
-    await bot.editMessageText(
-        `✅ تم!\n\n✅ نجح: ${sent}\n❌ فشل: ${failed}\n📊 المجموع: ${botUsers.size}`,
-        { chat_id: chatId, message_id: statusMsg.message_id }
-    );
-});
+1️⃣ افتح TikTok في المتصفح: https://www.tiktok.com
+2️⃣ سجل دخول لحسابك
+3️⃣ اضغط F12 (أو Cmd+Option+I في Mac)
+4️⃣ اذهب إلى تبويب "Application" (أو "التطبيق")
+5️⃣ من القائمة اليسرى: Storage > Cookies > https://www.tiktok.com
+6️⃣ ابحث عن cookie اسمها "sessionid"
+7️⃣ انسخ القيمة (Value) الكاملة
+8️⃣ أرسلها هنا
 
-// إحصائيات
-bot.onText(/\/stats/, async (msg) => {
-    const userId = msg.from.id.toString();
-    if (userId !== ADMIN_ID) return;
-    await bot.sendMessage(msg.chat.id, `📊 عدد المستخدمين: ${botUsers.size}`);
-});
+📝 الطريقة الثانية (Console):
 
-// معرف المستخدم
-bot.onText(/\/myid/, async (msg) => {
-    const userId = msg.from.id.toString();
-    const chatId = msg.chat.id;
-    await bot.sendMessage(chatId, `🆔 معرفك:\n\`${userId}\`\n\nانسخه وضعه في ADMIN_ID`, { parse_mode: 'Markdown' });
+1️⃣ افتح TikTok وسجل دخول
+2️⃣ اضغط F12 > Console
+3️⃣ الصق هذا الكود:
+\`\`\`
+document.cookie.split('; ').find(row => row.startsWith('sessionid=')).split('=')[1]
+\`\`\`
+4️⃣ انسخ النتيجة وأرسلها
+
+⚠️ ملاحظات:
+• يجب أن تكون مسجل دخول في TikTok
+• الـ sessionid هو الأهم
+• لا تشارك الـ cookies مع أحد!
+
+للإلغاء: /cancel
+    `.trim();
+
+    await bot.sendMessage(chatId, loginMessage, { parse_mode: 'Markdown' });
 });
 
 // ========================================
+// 📊 Check Reposts Command - فحص إعادات النشر
+// ========================================
+bot.onText(/\/check_reposts/, async (msg) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id.toString();
+
+    // Check if logged in
+    if (!sessionManager.hasSession(userId)) {
+        await bot.sendMessage(chatId, '❌ يجب تسجيل الدخول أولاً!\n\nاستخدم /login للبدء');
+        return;
+    }
+
+    if (!sessionManager.validateSession(userId)) {
+        await bot.sendMessage(chatId, '❌ انتهت صلاحية الجلسة!\n\nسجل دخول مرة ثانية باستخدام /login');
+        return;
+    }
+
+    const waitMsg = await bot.sendMessage(chatId, '⏳ جاري فحص إعادات النشر... انتظر شوي');
+
+    try {
+        // Get session
+        const session = sessionManager.getSession(userId);
+
+        // Initialize automation
+        const automation = new TikTokAutomation();
+        await automation.init(session.cookies);
+
+        // Get repost count
+        const repostManager = new RepostManager(automation);
+        const count = await repostManager.getRepostCount();
+
+        await automation.cleanup();
+
+        // Delete wait message
+        await bot.deleteMessage(chatId, waitMsg.message_id);
+
+        if (count === 0) {
+            await bot.sendMessage(chatId, '✅ ما عندك أي إعادات نشر!');
+        } else {
+            const message = `
+📊 معلومات إعادات النشر
+
+🔢 العدد الإجمالي: ${count} إعادة نشر
+
+🗑️ لحذف جميع إعادات النشر، استخدم:
+/delete_reposts
+
+⚠️ تحذير: الحذف نهائي ولا يمكن التراجع عنه!
+            `.trim();
+
+            await bot.sendMessage(chatId, message);
+        }
+
+    } catch (error) {
+        console.error('❌ Error checking reposts:', error);
+        await bot.deleteMessage(chatId, waitMsg.message_id);
+
+        if (error.message.includes('cookies')) {
+            sessionManager.invalidateSession(userId);
+            await bot.sendMessage(chatId, '❌ الـ cookies غير صالحة!\n\nسجل دخول مرة ثانية باستخدام /login');
+        } else {
+            await bot.sendMessage(chatId, '❌ حدث خطأ أثناء فحص إعادات النشر. جرب مرة ثانية.');
+        }
+    }
+});
+
+// ========================================
+// 🗑️ Delete Reposts Command - حذف إعادات النشر
+// ========================================
+bot.onText(/\/delete_reposts/, async (msg) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id.toString();
+
+    // Check if logged in
+    if (!sessionManager.hasSession(userId)) {
+        await bot.sendMessage(chatId, '❌ يجب تسجيل الدخول أولاً!\n\nاستخدم /login للبدء');
+        return;
+    }
+
+    if (!sessionManager.validateSession(userId)) {
+        await bot.sendMessage(chatId, '❌ انتهت صلاحية الجلسة!\n\nسجل دخول مرة ثانية باستخدام /login');
+        return;
+    }
+
+    const waitMsg = await bot.sendMessage(chatId, '⏳ جاري فحص إعادات النشر...');
+
+    try {
+        // Get session
+        const session = sessionManager.getSession(userId);
+
+        // Initialize automation
+        const automation = new TikTokAutomation();
+        await automation.init(session.cookies);
+
+        // Get repost count
+        const repostManager = new RepostManager(automation);
+        const count = await repostManager.getRepostCount();
+
+        await automation.cleanup();
+
+        // Delete wait message
+        await bot.deleteMessage(chatId, waitMsg.message_id);
+
+        if (count === 0) {
+            await bot.sendMessage(chatId, '✅ ما عندك أي إعادات نشر للحذف!');
+            return;
+        }
+
+        // Store pending deletion
+        pendingDeletions.set(userId, { count: count });
+        userStates.set(userId, 'CONFIRM_DELETE');
+
+        const confirmMessage = `
+⚠️ تحذير!
+
+أنت على وشك حذف ${count} إعادة نشر
+هذا الإجراء نهائي ولا يمكن التراجع عنه!
+
+⏱️ الوقت المتوقع: ${Math.ceil(count * 3.5 / 60)} دقيقة تقريباً
+
+للتأكيد، أرسل: نعم احذف
+للإلغاء، أرسل: إلغاء
+        `.trim();
+
+        await bot.sendMessage(chatId, confirmMessage);
+
+    } catch (error) {
+        console.error('❌ Error preparing deletion:', error);
+        await bot.deleteMessage(chatId, waitMsg.message_id);
+        await bot.sendMessage(chatId, '❌ حدث خطأ. جرب مرة ثانية.');
+    }
+});
+
+// ========================================
+// 🚪 Logout Command - تسجيل الخروج
+// ========================================
+bot.onText(/\/logout/, async (msg) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id.toString();
+
+    if (!sessionManager.hasSession(userId)) {
+        await bot.sendMessage(chatId, '❌ أنت غير مسجل دخول!');
+        return;
+    }
+
+    sessionManager.deleteSession(userId);
+    userStates.delete(userId);
+    pendingDeletions.delete(userId);
+
+    await bot.sendMessage(chatId, '👋 تم تسجيل الخروج بنجاح!');
+});
+
+// ========================================
+// ❌ Cancel Command - إلغاء العملية الحالية
 // ========================================
 bot.onText(/\/cancel/, async (msg) => {
     const chatId = msg.chat.id;
@@ -221,25 +329,6 @@ bot.on('message', async (msg) => {
         return;
     }
 
-    const userId = msg.from.id.toString();
-
-    if (CHANNEL_USERNAME) {
-        try {
-            const chatMember = await bot.getChatMember(CHANNEL_USERNAME, userId);
-            if (!['member', 'administrator', 'creator'].includes(chatMember.status)) {
-                const channelUrl = CHANNEL_USERNAME.startsWith('@') ? `https://t.me/${CHANNEL_USERNAME.substring(1)}` : CHANNEL_USERNAME;
-                await bot.sendMessage(chatId, `⚠️ عذراً، يجب عليك الاشتراك في قناة البوت أولاً لتتمكن من استخدامه.\n\nاشترك من هنا 👇`, {
-                    reply_markup: {
-                        inline_keyboard: [[{ text: 'اشترك في القناة 📢', url: channelUrl }]]
-                    }
-                });
-                return;
-            }
-        } catch (error) {
-            console.error('Error checking subscription on message:', error.message);
-        }
-    }
-
     // تحقق من عدم معالجة الرسالة مسبقاً
     const messageKey = `${chatId}_${messageId}`;
     if (processedMessages.has(messageKey)) {
@@ -248,6 +337,137 @@ bot.on('message', async (msg) => {
     }
     processedMessages.add(messageKey);
 
+    // ========================================
+    // Handle user states for multi-step operations
+    // ========================================
+    const userId = msg.from.id.toString();
+    const userState = userStates.get(userId);
+
+    // Handle cookies input
+    if (userState === 'WAITING_FOR_COOKIES' && text && !text.startsWith('/')) {
+        try {
+            const waitMsg = await bot.sendMessage(chatId, '⏳ جاري التحقق من الـ cookies...');
+
+            // Parse cookies
+            const cookies = parseCookies(text);
+
+            if (cookies.length === 0) {
+                await bot.deleteMessage(chatId, waitMsg.message_id);
+                await bot.sendMessage(chatId, '❌ الـ cookies غير صحيحة!\n\nتأكد من نسخ النتيجة كاملة وجرب مرة ثانية.');
+                return;
+            }
+
+            // Test cookies by initializing automation
+            const automation = new TikTokAutomation();
+            await automation.init(cookies);
+            await automation.page.goto('https://www.tiktok.com', { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+            // Check if logged in
+            const isLoggedIn = await automation.page.evaluate(() => {
+                return document.cookie.includes('sessionid');
+            });
+
+            await automation.cleanup();
+
+            if (!isLoggedIn) {
+                await bot.deleteMessage(chatId, waitMsg.message_id);
+                await bot.sendMessage(chatId, '❌ الـ cookies غير صالحة أو منتهية!\n\nتأكد من تسجيل الدخول في المتصفح وجرب مرة ثانية.');
+                return;
+            }
+
+            // Save session
+            sessionManager.saveSession(userId, cookies);
+            userStates.delete(userId);
+
+            await bot.deleteMessage(chatId, waitMsg.message_id);
+            await bot.sendMessage(chatId, '✅ تم تسجيل الدخول بنجاح!\n\nاستخدم /check_reposts لفحص إعادات النشر');
+
+        } catch (error) {
+            console.error('❌ Error validating cookies:', error);
+            await bot.sendMessage(chatId, '❌ حدث خطأ أثناء التحقق من الـ cookies. جرب مرة ثانية.');
+        }
+        return;
+    }
+
+    // Handle deletion confirmation
+    if (userState === 'CONFIRM_DELETE' && text && !text.startsWith('/')) {
+        if (text.trim() === 'نعم احذف' || text.trim().toLowerCase() === 'yes delete') {
+            const pendingDeletion = pendingDeletions.get(userId);
+
+            if (!pendingDeletion) {
+                await bot.sendMessage(chatId, '❌ حدث خطأ. جرب /delete_reposts مرة ثانية.');
+                userStates.delete(userId);
+                return;
+            }
+
+            // Start deletion process
+            userStates.set(userId, 'DELETING');
+            const statusMsg = await bot.sendMessage(chatId, '🗑️ جاري حذف إعادات النشر...\n\n⏳ انتظر شوي، هذا قد يستغرق بعض الوقت...');
+
+            try {
+                const session = sessionManager.getSession(userId);
+                const automation = new TikTokAutomation();
+                await automation.init(session.cookies);
+
+                const repostManager = new RepostManager(automation);
+
+                let lastUpdate = Date.now();
+                const result = await repostManager.deleteAllReposts(async (current, total, success) => {
+                    // Update status every 5 deletions or every 30 seconds
+                    const now = Date.now();
+                    if (current % 5 === 0 || now - lastUpdate > 30000) {
+                        try {
+                            const emoji = success ? '✅' : '❌';
+                            const percentage = Math.round((current / total) * 100);
+                            await bot.editMessageText(
+                                `🗑️ جاري الحذف...\n\nالتقدم: ${current}/${total} (${percentage}%)\n${emoji} آخر عملية: ${success ? 'نجحت' : 'فشلت'}`,
+                                { chat_id: chatId, message_id: statusMsg.message_id }
+                            );
+                            lastUpdate = now;
+                        } catch (e) {
+                            // Ignore edit errors
+                        }
+                    }
+                });
+
+                await automation.cleanup();
+
+                // Delete status message
+                await bot.deleteMessage(chatId, statusMsg.message_id);
+
+                // Send final result
+                if (result.cancelled) {
+                    await bot.sendMessage(chatId, `⚠️ تم إيقاف العملية\n\nتم الحذف: ${result.deleted}/${result.total}`);
+                } else if (result.deleted === result.total) {
+                    await bot.sendMessage(chatId, `✅ تم حذف جميع إعادات النشر بنجاح!\n\nالمجموع: ${result.deleted} إعادة نشر`);
+                } else {
+                    await bot.sendMessage(chatId, `⚠️ اكتملت العملية مع بعض الأخطاء\n\nنجح: ${result.deleted}/${result.total}\nفشل: ${result.failed}`);
+                }
+
+            } catch (error) {
+                console.error('❌ Error during deletion:', error);
+                await bot.deleteMessage(chatId, statusMsg.message_id);
+                await bot.sendMessage(chatId, '❌ حدث خطأ أثناء الحذف. جرب مرة ثانية.');
+            }
+
+            userStates.delete(userId);
+            pendingDeletions.delete(userId);
+            return;
+
+        } else if (text.trim() === 'إلغاء' || text.trim().toLowerCase() === 'cancel') {
+            userStates.delete(userId);
+            pendingDeletions.delete(userId);
+            await bot.sendMessage(chatId, '✅ تم إلغاء العملية');
+            return;
+        } else {
+            await bot.sendMessage(chatId, '⚠️ للتأكيد، أرسل: نعم احذف\nللإلغاء، أرسل: إلغاء');
+            return;
+        }
+    }
+
+    // ========================================
+    // Original message handling (TikTok links and usernames)
+    // ========================================
 
 
     // التحقق من وجود رابط تيك توك
@@ -395,11 +615,11 @@ bot.on('message', async (msg) => {
             await bot.sendMessage(chatId, '❌ حدث خطأ أثناء تحميل الفيديو. جرب مرة ثانية أو جرب رابط ثاني.');
         }
     }
-    // التحقق من وجود يوزر نيم (يجب أن يبدأ بـ @)
-    else if (text && text.startsWith('@') && !text.includes('http') && text.length > 2 && text.length < 30) {
+    // التحقق من وجود يوزر نيم (مع أو بدون @)
+    else if (text && !text.includes('http') && text.length > 2 && text.length < 30) {
         try {
-            // إزالة @
-            const username = text.substring(1);
+            // إزالة @ إذا كانت موجودة
+            const username = text.startsWith('@') ? text.substring(1) : text;
             const waitMsg = await bot.sendMessage(chatId, '⏳ جاري البحث عن الحساب... انتظر شوي');
 
             console.log('🔍 البحث عن اليوزر:', username);
@@ -554,12 +774,11 @@ bot.on('message', async (msg) => {
             await bot.sendMessage(chatId, '❌ حدث خطأ أثناء البحث. جرب مرة ثانية.');
         }
     }
-    else if (text && msg.chat.type === 'private') {
+    else if (text) {
         // رسالة للمستخدم إذا أرسل شيء غير رابط تيك توك أو يوزر نيم
-        // يتم إرسالها فقط في المحادثات الخاصة لتجنب الإزعاج في المجموعات
         await bot.sendMessage(chatId, `⚠️ أرسل لي:
 📹 رابط فيديو من تيك توك عشان أحمله لك
-👤 أو يوزر نيم (مثل @user) عشان أجيب لك معلومات الحساب!`);
+👤 أو يوزر نيم (مع أو بدون @) عشان أجيب لك معلومات الحساب!`);
     }
 });
 
