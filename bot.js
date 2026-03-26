@@ -322,8 +322,8 @@ bot.on('message', async (msg) => {
                     return;
                 }
 
-                // تحميل الفيديو
-                const videoUrl = d.hdplay || d.play;
+                // تحميل الفيديو - نستخدم play (H.264) بدل hdplay (H.265) لأن تلقرام ما يدعم H.265 كويس
+                const videoUrl = d.play || d.hdplay;
                 if (videoUrl) {
                     try {
                         console.log('📥 تحميل الفيديو...');
@@ -351,7 +351,7 @@ bot.on('message', async (msg) => {
                         });
 
                         console.log('📤 إرسال الفيديو...');
-                        await bot.sendVideo(chatId, videoPath, { caption });
+                        await bot.sendVideo(chatId, videoPath, { caption, supports_streaming: true });
                         console.log('✅ تم إرسال الفيديو بنجاح');
 
                         fs.unlinkSync(videoPath);
